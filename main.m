@@ -1,2 +1,4 @@
-% ECE 6250 - Advanced Digital Signal Processing
+% =======================================================
+% ECE 6390 - Satellite Communication & Navigation Systems
 % Georgia Institute of Technology
+% =======================================================
