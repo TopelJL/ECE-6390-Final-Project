@@ -4,6 +4,7 @@
 % =======================================================
 
 % Create function named modulatePilot
-function modulatedSignal = modulatePilot(x, params)
-    % D
+function modulatePilot = modulatePilot(x, params)
+    % perform various modulation schemes, figure out calculating bit error
+    % rate for each modulation scheme.
 end
