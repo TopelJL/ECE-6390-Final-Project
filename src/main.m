@@ -3,24 +3,29 @@
 % Georgia Institute of Technology
 % =======================================================
 
+clc; clear; close all;
 % ==========
 % Parameters
 % ==========
-B = 1e6;        % Bandwidth in Hz
-Fs = 10 * B;    % Sampling frequency
-N = 100;        % Number of samples
-fc = 2e9;        % Carrier frequency in Hz
-pt = 1;          % Transmit power in Watts
-Gt = 10;         % Gain of the transmitting antenna in dBi
-Gr = 10;         % Gain of the receiving antenna in dBi
-R = 1000;        % Distance in meters
-upsample_factor = 4; % Upsampling factor for the pilot signal
+params.B = 1e6;        % Bandwidth in Hz
+params.Fs = 10 * params.B;    % Sampling frequency
+params.N = 100;        % Number of samples
+params.fc = 2e9;        % Carrier frequency in Hz
+params.pt = 1;          % Transmit power in Watts
+params.Gt = 10;         % Gain of the transmitting antenna in dBi
+params.Gr = 10;         % Gain of the receiving antenna in dBi
+params.R = 1000;        % Distance in meters
+params.upsample_factor = 4; % Upsampling factor for the pilot signal
+
+% =======================================================
+%                   PILOT SIGNAL DESIGN
 
 % Generate and upsample the pilot sequence for Modulation
-pilot = pilotSignal(B, Fs, N);
+pilot = pilotSignal(params);
 
 % Applies modulation using the carrier frequency
-tx_signal = modulatePilot(pilot, fc, Fs);
+tx_signal = modulatePilot(pilot, params);
+% =======================================================
 
 % Computes received power using Friss equation??
 rx_signal = applyPathLoss(tx_signal, pt, Gt, Gr, fc, R);
