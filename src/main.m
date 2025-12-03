@@ -36,7 +36,7 @@ params.burst_period = 0.01;                     % Pilot burst period (s)
 params.PLL_BW = 10;                             % PLL bandwidth = 10 Hz
 params.phase_update_rate = 20;                  % Keep same
 
-params.num_sats = 5;                           % Number of satellites
+params.num_sats = 25;                           % Number of satellites
 params.A_cw = 0.7;                              % relative amplitude of CW tone
 params.A_bpsk = 1.0;                            % relative amplitude of PN
 params.plot_spectrum = true;

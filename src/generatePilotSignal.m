@@ -24,7 +24,7 @@ function [pilot_bb, pilot_template, t] = generatePilotSignal(params)
     % --- OPTIMIZATION: RRC Pulse Shaping ---
     % Define RRC parameters
     span = 6; % Filter span in symbols
-    alpha = 0.5; % Roll-off factor (0 < alpha <= 1)
+    alpha = 0.05; % Roll-off factor (0 < alpha <= 1)
     rrc_filter = rcosdesign(alpha, span, up);
     % Apply RRC pulse shaping
     pn_shaped = conv(pn_upsampled, rrc_filter, 'same');
