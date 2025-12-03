@@ -1,9 +1,9 @@
 function [rx_amp_linear, Pr_dBm, EIRP_dBm, FSPL_dB] = computeFriisScaling(params)
-    % Computes FSPL and received power given params
+    % Computes FSPL and received power
     c = 3e8;
     lambda = c / params.fc;
     R = params.R;
-    FSPL = (4*pi*R/lambda)^2; % linear
+    FSPL = (4*pi*R/lambda)^2;
     FSPL_dB = 20*log10(4*pi*R/lambda);
 
     Pt = params.pt; % Watts

@@ -8,29 +8,45 @@ clc; clear; close all;
 % ==========
 % Parameters
 % ==========
+
 params.B = 1e6;                                 % Pilot bandwidth (Hz)
 params.Fs = 10 * params.B;                      % Sampling frequency (Hz)
-params.PN_len = 4095;                           % PN length (use 1023 or 4095)
-params.fc = 2.45e9;                             % Carrier freq (Hz)
-params.pt = 50;                                 % Transmit power (W)
-params.noiseFigure = 3;                         % Rx noise figure (dB)
-params.SNR_target = 15;                         % Desired SNR (dB) at satellite
-params.Gt = 50;                                 % Ground antenna gain (dBi)
-params.Gr = 30;                                 % Satellite antenna gain (dBi)
-params.R = 3.6e7;                               % GEO distance (m)
+params.PN_len = 4095;                           % PN length
+params.fc = 5.8e9;                              % Carrier frequency (Hz)
+
+% Transmit power: table gives 3 dBW = 2 watts
+params.pt = 10^(3/10);                          % 3 dBW → watts = 1.995 = 2 W
+
+% Antenna gains from table
+params.Gt = 25;                                 % TX antenna gain (dBi)
+params.Gr = 25;                                 % RX antenna gain (dBi)
+
+% GEO range from table
+params.R = 36000e3;                             % GEO range (m)
+
+params.noiseFigure = 0;                         % NF handled by C/No instead
+params.CNo_dBHz = 45;                           % directly set C/No from table
+
+params.SNR_target = [];                         % REMOVE old SNR requirement
+
 params.upsample_factor = params.Fs / params.B;  % should be integer
 params.burst_period = 0.01;                     % Pilot burst period (s)
-params.PLL_BW = 0.5;                            % PLL bandwidth (Hz)
-params.phase_update_rate = 20;                  % Phase update rate (Hz)
-params.num_sats = 5;                            % Number of satellites simulated
-params.A_cw = 0.7;                              % relative amplitude of CW tone (complex phasor)
-params.A_bpsk = 1.0;                            % relative amplitude of BPSK PN component
 
-% Jammer parameters
+% PLL from table
+params.PLL_BW = 10;                             % PLL bandwidth = 10 Hz
+params.phase_update_rate = 20;                  % Keep same
+
+params.num_sats = 5;                           % Number of satellites
+params.A_cw = 0.7;                              % relative amplitude of CW tone
+params.A_bpsk = 1.0;                            % relative amplitude of PN
+params.plot_spectrum = true;
+
+% Jammer configuration
 jammer.enable = true;
-jammer.rel_power_dB = -10;   % Jammer power relative to signal power (dB)
-jammer.freq_offset = 1e3;    % narrowband tone offset from carrier (Hz)
+jammer.rel_power_dB = -10;                      % jammer weaker than signal
+jammer.freq_offset = 1e3;                       % 1 kHz away
 jammer.phase = 0;
+
 
 % Basic checks
 if mod(params.upsample_factor,1) ~= 0
@@ -67,3 +83,18 @@ plotSimulationResults(params, t, pilot_bb, tx_bb, rx_matrix, phase_offsets_est, 
 fprintf('\n--- Pilot Post-Processing Complete ---\n');
 fprintf('Min Phase RMSE: %.2f degrees at max SNR (%.0f dB)\n', min(phase_rmse_deg), max(SNR_dB_vec));
 
+%% === Processing Gain & Diagnostic Plots ===
+% Assumes params and pilot_bb exist
+
+% Basic derived values
+chip_rate = params.Fs / params.upsample_factor;    % should equal params.B
+PN_len = params.PN_len;
+R_data = chip_rate / PN_len;                       % if 1 symbol per PN frame
+PG_linear = PN_len;
+PG_dB = 10*log10(PG_linear);
+
+fprintf('--- Processing Gain ---\n');
+fprintf('Chip rate = %.3g Hz\n', chip_rate);
+fprintf('Effective data rate (1 frame) = %.6g Hz\n', R_data);
+fprintf('Processing gain (linear) = %.3g\n', PG_linear);
+fprintf('Processing gain (dB) = %.3f dB\n', PG_dB);

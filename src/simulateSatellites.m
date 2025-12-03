@@ -1,6 +1,4 @@
 function [phase_offsets_est, phase_true, rx_matrix, P_coherent, P_incoherent] = simulateSatellites(params, jammer, rx_bb_no_channel, pilot_template, t)
-%SIMULATESATELLITES Simulates reception and phase estimation across multiple satellites.
-%
 %   Inputs:
 %       params             - System parameters structure (contains num_sats, B, noiseFigure, etc.)
 %       jammer             - Jammer parameters structure (contains enable, rel_power_dB, etc.)

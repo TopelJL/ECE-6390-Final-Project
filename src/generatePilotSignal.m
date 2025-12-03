@@ -5,34 +5,63 @@
 
 function [pilot_bb, pilot_template, t] = generatePilotSignal(params)
     % Grab system parameters.
-    Fs = params.Fs;
-    BW = params.B;
-    up = params.upsample_factor;
-    PN_len = params.PN_len;
+    Fs      = params.Fs;
+    up      = params.upsample_factor;
+    PN_len  = params.PN_len;
 
-    % generate PN (±1) of length PN_len (use maximal length LFSR-friendly lengths)
-    pn = 2*randi([0 1], 1, PN_len) - 1;  % length PN_len
+    % Optional flag:
+    plot_spectrum = false;
+    if isfield(params, "plot_spectrum")
+        plot_spectrum = params.plot_spectrum;
+    end
+
+    % ---------- Generate PN Sequence ----------
+    pn = 2*randi([0 1], 1, PN_len) - 1;
 
     % Upsample PN to sampling rate
     pn_upsampled = upsample(pn, up);
 
-    % simple rectangular pulse shaping by convolution with ones(up)
-    pn_shaped = conv(pn_upsampled, ones(1,up), 'same');
+    % --- OPTIMIZATION: RRC Pulse Shaping ---
+    % Define RRC parameters
+    span = 6; % Filter span in symbols
+    alpha = 0.5; % Roll-off factor (0 < alpha <= 1)
+    rrc_filter = rcosdesign(alpha, span, up);
+    % Apply RRC pulse shaping
+    pn_shaped = conv(pn_upsampled, rrc_filter, 'same');
+    % Trim convolution result to match original length (crucial for 'same' with custom filter)
+    pn_shaped = pn_shaped(floor(span*up/2)+1 : end-floor(span*up/2)); 
+    % If 'same' mode wasn't used: L_pn = length(pn_upsampled); pn_shaped = pn_shaped(ceil(length(rrc_filter)/2):ceil(length(rrc_filter)/2)+L_pn-1);
+    % -----------------------------------------
 
     % Time vector for one PN frame
     L = length(pn_shaped);
-    t = (0:L-1)/Fs;
+    t = (0:L-1) / Fs;
 
-    % Represent CW at baseband as constant complex phasor (DC) with amplitude params.A_cw.
-    % Use a phase of zero for the reference CW.
-    cw_bb = params.A_cw * ones(1, L) * exp(1j*0);  % complex DC phasor
+    % ---------- Generate CW Component ----------
+    cw_bb = params.A_cw * ones(1, L) .* exp(1j*0);
 
-    % BPSK component (real) scaled
-    bpsk_bb = params.A_bpsk * pn_shaped;   % real-valued ±1 shaped
+    % ---------- Generate BPSK DSSS Component ----------
+    bpsk_bb = params.A_bpsk * pn_shaped;
 
-    % Composite: sum CW phasor (complex) + BPSK (real part)
-    pilot_bb = cw_bb + bpsk_bb;   % complex vector
+    % ---------- Composite Pilot Signal ----------
+    pilot_bb = cw_bb + bpsk_bb;
 
-    % Template: use full composite (conjugated) for matched filtering
+    % ---------- Matched Filter Template ----------
     pilot_template = conj(pilot_bb);
+
+    % =======================================================
+    % Optional: Spectrum Plot of Hybrid CW + DSSS Pilot
+    % =======================================================
+    if plot_spectrum
+        Nfft = 4096;
+        FFT_vals = fftshift( fft(pilot_bb, Nfft) );
+        freq_axis = (-Nfft/2 : Nfft/2-1) * (Fs/Nfft);
+
+        figure;
+        plot(freq_axis/1e3, 20*log10(abs(FFT_vals)+1e-12), 'LineWidth', 1.4);
+        grid on;
+        xlabel('Frequency (kHz)');
+        ylabel('Magnitude (dB)');
+        title('Spectrum of Hybrid CW + DSSS Pilot Signal');
+    end
 end
